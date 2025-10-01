@@ -1,0 +1,78 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/yourusername/devops-portfolio-project.git'
+            }
+        }
+        
+        stage('Test') {
+            parallel {
+                stage('Unit Tests') {
+                    steps {
+                        sh 'python -m pytest tests/unit -v'
+                    }
+                }
+                stage('Integration Tests') {
+                    steps {
+                        sh 'python -m pytest tests/integration -v'
+                    }
+                }
+            }
+        }
+        
+        stage('Build & Security Scan') {
+            steps {
+                script {
+                    docker.build("myapp:${env.BUILD_ID}")
+                    sh 'trivy image myapp:${env.BUILD_ID}'
+                }
+            }
+        }
+        
+        stage('Deploy to Staging') {
+            steps {
+                sh 'kubectl apply -f kubernetes/ -n staging'
+                sh 'kubectl rollout status deployment/webapp-deployment -n staging'
+            }
+        }
+        
+        stage('Integration Tests') {
+            steps {
+                sh './scripts/run-integration-tests.sh'
+            }
+        }
+        
+        stage('Deploy to Production') {
+            when {
+                branch 'main'
+            }
+            steps {
+                input message: 'Deploy to production?', submitterParameter: 'approver'
+                sh 'kubectl apply -f kubernetes/ -n production'
+                sh 'kubectl rollout status deployment/webapp-deployment -n production'
+            }
+        }
+    }
+    
+    post {
+        always {
+            emailext (
+                subject: "Build Result: ${currentBuild.result ?: 'SUCCESS'}",
+                body: "Build ${env.BUILD_URL} completed with result: ${currentBuild.result ?: 'SUCCESS'}",
+                to: 'team@company.com'
+            )
+        }
+        failure {
+            slackSend channel: '#devops-alerts', message: "Build Failed: ${env.BUILD_URL}"
+        }
+    }
+}
