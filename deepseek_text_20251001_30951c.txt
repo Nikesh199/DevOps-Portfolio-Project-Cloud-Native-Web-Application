@@ -1,0 +1,55 @@
+devops-portfolio-project/
+│
+├── .github/
+│   └── workflows/
+│       ├── ci-cd-pipeline.yml
+│       └── security-scan.yml
+│
+├── infrastructure/
+│   ├── terraform/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   └── terraform.tfvars.example
+│   ├── kubernetes/
+│   │   ├── deployment.yaml
+│   │   ├── service.yaml
+│   │   ├── ingress.yaml
+│   │   └── configmap.yaml
+│   └── ansible/
+│       ├── playbook.yaml
+│       └── inventory.ini
+│
+├── src/
+│   ├── app/
+│   │   ├── Dockerfile
+│   │   ├── requirements.txt
+│   │   └── app.py
+│   ├── nginx/
+│   │   └── nginx.conf
+│   └── database/
+│       └── init.sql
+│
+├── scripts/
+│   ├── deploy.sh
+│   ├── backup.sh
+│   └── health-check.sh
+│
+├── monitoring/
+│   ├── prometheus/
+│   │   └── prometheus.yml
+│   ├── grafana/
+│   │   └── dashboard.yaml
+│   └── alerts/
+│       └── rules.yml
+│
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├ SETUP.md
+│   └── TROUBLESHOOTING.md
+│
+├── Jenkinsfile
+├── docker-compose.yml
+├── .gitignore
+├── README.md
+└── Makefile

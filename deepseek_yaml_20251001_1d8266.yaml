@@ -1,0 +1,55 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        pip install -r src/app/requirements.txt
+        pip install pytest pylint
+    
+    - name: Lint code
+      run: |
+        pylint src/app/app.py
+    
+    - name: Run tests
+      run: |
+        pytest tests/ -v
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Build Docker image
+      run: |
+        docker build -t myapp:${{ github.sha }} ./src/app
+    
+    - name: Scan with Trivy
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'myapp:${{ github.sha }}'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Deploy to Staging
+      run: |
+        echo "Deploying to staging environment"
+        # Add your deployment commands here
